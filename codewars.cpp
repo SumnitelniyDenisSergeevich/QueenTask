@@ -3,78 +3,67 @@
 #include <vector>
 #include <iostream>
 #include <optional>
-
+#include <set>
 using namespace std;
 
 namespace nQueens
 {
     struct chessboard_map {
-        std::vector<std::vector<uint16_t>> map;
-        size_t ferz_count = 0;
+        std::vector<std::vector<bool>> map;
+        size_t queen_count = 0;
     };
     //using chessboard_map = std::vector<std::vector<uint16_t>>;//(y,x)
-
-    inline bool operator< (const chessboard_map& lhs, const chessboard_map& rhs);
 
     class Chessboard {
     public:
         Chessboard(std::size_t chessboard_size);
 
-       // bool SimpleDecision();
         string PrintHardDecision(std::pair<int, int> mandatoryQueenCoordinates);
     private:
         chessboard_map chessboard_map_;      //в конструкторе заполняется еденицами(true), по дефолту нулями;
         std::optional<chessboard_map> result_; // здесь храним удачные результаты
 
-        void AddMagaraja(chessboard_map initial_chessboard_map, size_t x, size_t y);
+        void AddFirstQueen(size_t col, size_t row);
 
-        void CloseTargetFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const;
+        void AddQueen(size_t row, size_t col, std::set<size_t>& rows, std::set<size_t>& cols);
 
-        void CloseVerticalAndHorizontalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const;
-        void CloseDiagonalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const;
-        void CloseTopLeftDiagonalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const;
-        void CloseTopRightDiagonalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const;
-        void CloseDownLeftDiagonalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const;
-        void CloseDownRightDiagonalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const;
+        bool CheckDiagonalFields(size_t x, size_t y) const;
+        bool CheckTopLeftDiagonalFields(int x, int y) const;
+        bool CheckTopRightDiagonalFields(int x, int y) const;
+        bool CheckDownLeftDiagonalFields(int x, int y) const;
+        bool CheckDownRightDiagonalFields(size_t x, size_t y) const;
     };
 
-    Chessboard::Chessboard(size_t chessboard_size) {
-        chessboard_map_.map.resize(chessboard_size); // создали chessboard_size строк(y)
-        for (vector<uint16_t>& x : chessboard_map_.map) { // создали chessboard_size столбцов(x)
-            x.resize(chessboard_size, 1);    //заполнили true
+    Chessboard::Chessboard(size_t size) {
+        chessboard_map_.map.resize(size); // создали chessboard_size строк(y)
+        for (vector<bool>& x : chessboard_map_.map) { // создали chessboard_size столбцов(x)
+            x.resize(size, false);    //заполнили false
         }
     }
 
-    /*bool Chessboard::SimpleDecision() {
-        size_t chessboard_size = chessboard_map_.map.size();
-        if (chessboard_size <= 8) {
-            return true;
-        }
-        return false;
-    }*/
-
-    void PrintChess(const chessboard_map& chessboard) {
-        for (const auto& y : chessboard.map) {
-            for (const auto& x : y) {
-                cout << x << " ";
-            }
-            cout << endl;
-        }
-        cout << endl;
-    }
+    //void PrintChess(const chessboard_map& chessboard) {
+    //    for (const auto& y : chessboard.map) {
+    //        for (const auto& x : y) {
+    //            cout << x << " ";
+    //        }
+    //        cout << endl;
+    //    }
+    //    cout << endl;
+    //}
 
     string Chessboard::PrintHardDecision(std::pair<int, int> mandatoryQueenCoordinates) {
         try {
-            AddMagaraja(chessboard_map_, mandatoryQueenCoordinates.first, mandatoryQueenCoordinates.second);
+            AddFirstQueen(mandatoryQueenCoordinates.first, mandatoryQueenCoordinates.second);
         }
         catch (runtime_error) {
 
         }
         string result = "";
         if (result_) {
+            cout << "hoho" << endl;
             for (const auto& y : result_->map) {
                 for (const auto& x : y) {
-                    if (x == 2) {
+                    if (x) {
                         result += "Q";
                     }
                     else {
@@ -87,16 +76,43 @@ namespace nQueens
         return result;
     }
 
-    void Chessboard::AddMagaraja(chessboard_map initial_chessboard_map, size_t x, size_t y) { // Здесь мы КОПИРУЕМ initial_chessboard
-        CloseTargetFields(initial_chessboard_map, x, y);
-        initial_chessboard_map.map[y][x] = 2;// Cтавим Ферзя
-        ++initial_chessboard_map.ferz_count;
-        if (initial_chessboard_map.ferz_count == chessboard_map_.map.size()) {
-            result_ = initial_chessboard_map;
-            throw runtime_error("go");
+    void Chessboard::AddFirstQueen(size_t col, size_t row) {
+        std::set<size_t> rows, cols;
+        for (size_t i = 0; i < chessboard_map_.map.size(); ++i) {
+            rows.insert(i);
+            cols.insert(i);
         }
+
+        AddQueen(row, col, rows, cols);
+    }
+
+    void Chessboard::AddQueen(size_t row, size_t col, std::set<size_t>& rows_, std::set<size_t>& cols_) {
+        if (!CheckDiagonalFields(col, row)) {
+            return;
+        }
+        chessboard_map_.map[row][col] = true;// Cтавим Ферзя
+        ++chessboard_map_.queen_count;
+        if (chessboard_map_.queen_count == chessboard_map_.map.size()) {
+            result_ = chessboard_map_;
+            throw runtime_error("lol");
+        }
+
+        std::set<size_t> rows = rows_, cols = cols_;
+        rows.erase(row);
+        cols.erase(col);
         ////print--------------------------------------------
-        //for (const auto& y : initial_chessboard_map.map) {
+        //cout << endl;
+        //cout << "rows: ";
+        //for (const size_t row : rows) {
+        //    cout << row << ", ";
+        //}
+        //cout << endl;
+        //cout << "cols: ";
+        //for (const size_t col : cols) {
+        //    cout << col << ", ";
+        //}
+        //cout << endl;
+        //for (const auto& y : chessboard_map_.map) {
         //    for (const auto& x : y) {
         //        cout << x << " ";
         //    }
@@ -105,82 +121,64 @@ namespace nQueens
         //cout << endl;
         ////endprint--------------------------------------------
         //system("pause");
-
-        for (size_t i = 0; i < initial_chessboard_map.map.size(); ++i) {//y
-            for (size_t j = 0; j < initial_chessboard_map.map.size(); ++j) {//x
-                if (initial_chessboard_map.map[i][j] == 1) {
-                    AddMagaraja(initial_chessboard_map, j, i);
-                }
+        for (const size_t row : rows) {
+            for (const size_t col : cols) {
+                AddQueen(row, col, rows, cols);
             }
         }
-    }
-
-    void Chessboard::CloseTargetFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const {
-        CloseVerticalAndHorizontalFields(initial_chessboard_map, x, y);
-        CloseDiagonalFields(initial_chessboard_map, x, y);
+        --chessboard_map_.queen_count;
+        chessboard_map_.map[row][col] = false;
     }
 
 
-    void Chessboard::CloseVerticalAndHorizontalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const {
-        for (size_t i = 0; i < initial_chessboard_map.map.size(); ++i) {
-            initial_chessboard_map.map[i][x] = 0;
-            initial_chessboard_map.map[y][i] = 0;
-        }
+    bool Chessboard::CheckDiagonalFields(size_t x, size_t y) const {
+        bool ch1 = CheckTopLeftDiagonalFields(x, y);
+        bool ch2 = CheckTopRightDiagonalFields( x, y);
+        bool ch3 = CheckDownLeftDiagonalFields(x, y);
+        bool ch4 = CheckDownRightDiagonalFields(x, y);
+        return (ch1 && ch2 && ch3 && ch4);
     }
 
-    void Chessboard::CloseDiagonalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const {
-        CloseTopLeftDiagonalFields(initial_chessboard_map, x, y);
-        CloseTopRightDiagonalFields(initial_chessboard_map, x, y);
-        CloseDownLeftDiagonalFields(initial_chessboard_map, x, y);
-        CloseDownRightDiagonalFields(initial_chessboard_map, x, y);
+    bool Chessboard::CheckTopLeftDiagonalFields(int x, int y) const {
+        while ((x -= 1) >= 0 && (y -= 1) >= 0) {
+            if (chessboard_map_.map.at(y).at(x)) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    void Chessboard::CloseTopLeftDiagonalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const {
-        while ((x != 0) && (y != 0)) {
-            initial_chessboard_map.map[y][x] = 0;//левую верхнюю диагональ
-            x -= 1;
-            y -= 1;
+    bool Chessboard::CheckTopRightDiagonalFields(int x, int y) const {
+        while ((x += 1) < chessboard_map_.map.size() && (y -= 1) >= 0) {
+            if (chessboard_map_.map.at(y).at(x)) {
+                return false;
+            }
         }
-        initial_chessboard_map.map[y][x] = 0;
+
+        return true;
     }
 
-    void Chessboard::CloseTopRightDiagonalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const {
-        while ((x < initial_chessboard_map.map.size()) && (y != 0)) {
-            initial_chessboard_map.map[y][x] = 0;//заполняет правую верхнюю диагональ
-            x += 1;
-            y -= 1;
+    bool Chessboard::CheckDownLeftDiagonalFields(int x, int y) const {
+        while ((x -= 1) >= 0 && (y += 1) < chessboard_map_.map.size()) {
+            if (chessboard_map_.map.at(y).at(x)) {
+                return false;
+            }
         }
-
-        if (y == 0 && x != initial_chessboard_map.map.size()) {
-            initial_chessboard_map.map[y][x] = 0;
-        }
+        return true;
     }
 
-    void Chessboard::CloseDownLeftDiagonalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const {
-        while ((x != 0) && (y < initial_chessboard_map.map.size())) {
-            initial_chessboard_map.map[y][x] = 0;//заполняет левую нижнюю диагональ
-            x -= 1;
-            y += 1;
+    bool Chessboard::CheckDownRightDiagonalFields(size_t x, size_t y) const {
+        while (((x += 1) < chessboard_map_.map.size()) && ((y += 1) < chessboard_map_.map.size())) {
+            if (chessboard_map_.map.at(y).at(x)) {
+                return false;
+            }
         }
-
-        if (x == 0 && y != initial_chessboard_map.map.size()) {
-            initial_chessboard_map.map[y][x] = 0;
-        }
-    }
-
-    void Chessboard::CloseDownRightDiagonalFields(chessboard_map& initial_chessboard_map, size_t x, size_t y) const {
-        while (((x += 1) < initial_chessboard_map.map.size()) && ((y += 1) < initial_chessboard_map.map.size())) {
-            initial_chessboard_map.map[y][x] = 0;//заполняет правую нижнюю диагональ нулями
-        }
+        return true;
     }
 
     std::string solveNQueens(int n, std::pair<int, int> mandatoryQueenCoordinates)
     {
-        size_t chessboard_size = n;
-        Chessboard chessboard(chessboard_size);
-        /*if (chessboard.SimpleDecision()) {
-            return "";
-        }*/
+        Chessboard chessboard(n);
         return chessboard.PrintHardDecision(mandatoryQueenCoordinates);
     }
 }
@@ -188,6 +186,6 @@ namespace nQueens
 
 int main()
 {
-    cout << nQueens::solveNQueens(16, { 5,7 }) << endl;
+    cout << nQueens::solveNQueens(10, { 3,3 }) << endl;
     system("pause");
 }
