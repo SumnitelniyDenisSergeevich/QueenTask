@@ -5,7 +5,7 @@
 #include <cmath>
 #include <algorithm>
 #include <random>
-
+#include <map>
 
 using namespace std;
 
@@ -14,6 +14,18 @@ void ShuffleVector(std::vector<size_t>& v) {
     std::mt19937 g(rd());
     std::shuffle(v.begin(), v.end(), g);
 }
+
+
+bool Chessboard::TrySetQueen(size_t col, size_t row) {
+    if (!right_diagonal_[col + row] && !left_diagonal_[size_ + col - row - 1]) {
+        map_[col] = row;
+        right_diagonal_[col + row] = true;
+        left_diagonal_[size_ + col - row - 1] = true;
+        ++queen_count_;
+        return true;
+    }
+    return false;
+};
 
 Chessboard::Chessboard(size_t size) : map_(size, -1) {
     queen_count_ = 0;
@@ -56,6 +68,8 @@ string Chessboard::Decision(std::pair<int, int> queen_coord) {
 }
 
 void Chessboard::SetFreeRowsCols(std::vector<size_t>& cols, std::vector<size_t>& rows) {
+    cols.clear();
+    rows.clear();
     for (size_t i = 0; i < map_.size(); ++i) {
         rows.push_back(i);
     }
@@ -98,65 +112,82 @@ bool Chessboard::FreeHasDecision(std::vector<size_t>& cols, std::vector<size_t>&
 void Chessboard::Block1() {
     vector<size_t> free_rows;
     vector<size_t> free_cols;
-    SetFreeRowsCols(free_cols, free_rows);
-    vector<size_t> free_rows_copy = free_rows;
-    vector<size_t> free_cols_copy = free_cols;
-    ShuffleVector(free_rows);
-    ShuffleVector(free_cols);
 
-    bool has_decision = true;
-
-    size_t while_count = 0;
-    while (queen_count_ <  base_level2_) {
-        if (while_count > 1000) {
-            has_decision = false;
-        }
-        if (!FreeHasDecision(free_cols, free_rows)) {
-            free_rows = free_rows_copy;
-            free_cols = free_cols_copy;
+    do {
+        bool has_decision = true;
+        do {
+            SetInputData();
+            SetFreeRowsCols(free_cols, free_rows);
+            vector<size_t> free_rows_copy = free_rows;
+            vector<size_t> free_cols_copy = free_cols;
             ShuffleVector(free_rows);
             ShuffleVector(free_cols);
-            SetInputData();
-        }
-        ++while_count;
-        for (int i = free_rows.size() - 1; i > 0; --i) {
-            if (TrySetQueen(free_cols.at(i), free_rows.at(i))) {
-                free_cols.erase(free_cols.begin() + i);
-                free_rows.erase(free_rows.begin() + i);
+
+            size_t while_count = 0;
+            while (queen_count_ < base_level2_) {
+                if (while_count > 1000) {
+                    has_decision = false;
+                    break;
+                }
+                if (!FreeHasDecision(free_cols, free_rows)) {
+                    free_rows = free_rows_copy;
+                    free_cols = free_cols_copy;
+                    ShuffleVector(free_rows);
+                    ShuffleVector(free_cols);
+                    SetInputData();
+                }
+                ++while_count;
+                for (int i = free_rows.size() - 1; i > 0; --i) {
+                    if (TrySetQueen(free_cols.at(i), free_rows.at(i))) {
+                        free_cols.erase(free_cols.begin() + i);
+                        free_rows.erase(free_rows.begin() + i);
+                    }
+                }
+                ShuffleVector(free_rows);
+                ShuffleVector(free_cols);
             }
-        }
-        ShuffleVector(free_rows);
-        ShuffleVector(free_cols);
-    }
-    if (has_decision) {
-        Block2(free_cols, free_rows);
-    }
+        } while (!has_decision); // пока не будет решения, отсюда не выйдем, может получиться бесконечный цикл?
+    } while (!Block2(free_cols, free_rows));
 }
 
-void Chessboard::Block2(std::vector<size_t>& cols, std::vector<size_t>& rows) {
+bool Chessboard::Block2(std::vector<size_t>& cols, std::vector<size_t>& rows) {
     SetBlock1Copy();
-    Block3(cols, rows);
+    return Block3(cols, rows);
 }
 
-void Chessboard::Block3(std::vector<size_t>& cols, std::vector<size_t>& rows) {
-
+bool Chessboard::Block3(std::vector<size_t>& cols, std::vector<size_t>& rows) {
     vector<size_t> free_rows_copy = rows;
     vector<size_t> free_cols_copy = cols;
-    while (queen_count_ <  25/*base_level3_*/) {
+    size_t while_count = 0;
+    while (queen_count_ < base_level3_) {
+        if (while_count > 1000) {
+            return false;
+        }
+        if (!FreeHasDecision(cols, rows)) {
+            rows = free_rows_copy;
+            cols = free_cols_copy;
+            ShuffleVector(rows);
+            ShuffleVector(cols);
+            SetBlock1Data();
+        }
+        ++while_count;
         size_t random_free_row = rows.at(std::rand() % rows.size());
-        vector<size_t> free_cols_in_free_row = GetFreeColsInRow(random_free_row, cols); // проверка на пустоту !!!
+        vector<size_t> free_cols_in_free_row = GetFreeColsInRow(random_free_row, cols);
         if (!free_cols_in_free_row.size()) {
-            cout << "empty" << endl;
-            system("pause");
+            return false;
         }
         size_t random_free_col = free_cols_in_free_row.at( std::rand() % free_cols_in_free_row.size() );
-        if (!TrySetQueen(random_free_col, random_free_row)) {
-            cout << "error" << endl;
-            system("pause");
-        }
+        TrySetQueen(random_free_col, random_free_row);
         rows.erase(find(rows.begin(), rows.end(), random_free_row));
         cols.erase(find(cols.begin(), cols.end(), random_free_col));
     }
+    Block4(cols, rows);
+    return true;
+}
+
+bool Chessboard::Block4(std::vector<size_t>& cols, std::vector<size_t>& rows) {
+    cout << "Good" << endl;
+    return true; // заглушка;
 }
 
 std::vector<size_t> Chessboard::GetFreeColsInRow(size_t row, vector<size_t>& cols) {
@@ -169,16 +200,6 @@ std::vector<size_t> Chessboard::GetFreeColsInRow(size_t row, vector<size_t>& col
     return result;
 }
 
-bool Chessboard::TrySetQueen(size_t col, size_t row) {
-    if (!right_diagonal_[col + row] && !left_diagonal_[size_ + col - row - 1]) {
-        map_[col] = row;
-        right_diagonal_[col + row] = true;
-        left_diagonal_[size_ + col - row - 1] = true;
-        ++queen_count_;
-        return true;
-    }
-    return false;
-}
 
 std::string Chessboard::PrintMap() {
     string result = "";

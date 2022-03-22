@@ -31,8 +31,9 @@ private:
 
     std::string PrintMap();
     void Block1();
-    void Block2(std::vector<size_t>& cols, std::vector<size_t>& rows);
-    void Block3(std::vector<size_t>& cols, std::vector<size_t>& rows);
+    bool Block2(std::vector<size_t>& cols, std::vector<size_t>& rows);
+    bool Block3(std::vector<size_t>& cols, std::vector<size_t>& rows);
+    bool Block4(std::vector<size_t>& cols, std::vector<size_t>& rows);
     bool TrySetQueen(size_t col, size_t row);
     void SetInputCopy();
     void SetInputData();
