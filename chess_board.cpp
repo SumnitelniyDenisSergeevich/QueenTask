@@ -57,6 +57,13 @@ void Chessboard::SetBlock1Copy() {
     block1_left_diagonal_ = left_diagonal_;
 }
 
+void Chessboard::SetBlock3Copy() {
+    block3_map_ = map_;
+    block3_queen_count_ = queen_count_;
+    block3_right_diagonal_ = right_diagonal_;
+    block3_left_diagonal_ = left_diagonal_;
+}
+
 string Chessboard::Decision(std::pair<int, int> queen_coord) {
     map_[queen_coord.first] = queen_coord.second;
     right_diagonal_[queen_coord.first + queen_coord.second] = true;
@@ -96,6 +103,14 @@ void Chessboard::SetBlock1Data() {
     queen_count_ = block1_queen_count_;
     right_diagonal_ = block1_right_diagonal_;
     left_diagonal_ = block1_left_diagonal_;
+}
+
+
+void Chessboard::SetBlock3Data() {
+    map_ = block3_map_;
+    queen_count_ = block3_queen_count_;
+    right_diagonal_ = block3_right_diagonal_;
+    left_diagonal_ = block3_left_diagonal_;
 }
 
 bool Chessboard::FreeHasDecision(std::vector<size_t>& cols, std::vector<size_t>& rows) {
@@ -186,8 +201,26 @@ bool Chessboard::Block3(std::vector<size_t>& cols, std::vector<size_t>& rows) {
 }
 
 bool Chessboard::Block4(std::vector<size_t>& cols, std::vector<size_t>& rows) {
-    cout << "Good" << endl;
-    return true; // заглушка;
+    vector<pair<size_t,size_t>> row_id_free_cols;
+    for (const size_t row : rows) {
+        row_id_free_cols.push_back(make_pair(0,row));
+        for (const size_t col : cols) {
+            if (!right_diagonal_[col + row] && !left_diagonal_[size_ + col - row - 1]) {
+                ++row_id_free_cols.back().first;
+            }
+        }
+    }
+    std::sort(row_id_free_cols.begin(), row_id_free_cols.end());
+    if (!row_id_free_cols.begin()->first) {
+        return false;
+    }
+    SetBlock3Copy();
+    return Block5( cols, rows);
+}
+
+bool Chessboard::Block5(std::vector<size_t>& cols, std::vector<size_t>& rows) {
+
+    return true;// заглушка
 }
 
 std::vector<size_t> Chessboard::GetFreeColsInRow(size_t row, vector<size_t>& cols) {

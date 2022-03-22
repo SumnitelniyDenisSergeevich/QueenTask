@@ -27,6 +27,12 @@ private:
     size_t block1_queen_count_;
     std::vector<bool> block1_right_diagonal_, block1_left_diagonal_;
     //end block1 copy
+
+    //block1 copy
+    std::vector<int> block3_map_;
+    size_t block3_queen_count_;
+    std::vector<bool> block3_right_diagonal_, block3_left_diagonal_;
+    //end block1 copy
     
 
     std::string PrintMap();
@@ -34,11 +40,14 @@ private:
     bool Block2(std::vector<size_t>& cols, std::vector<size_t>& rows);
     bool Block3(std::vector<size_t>& cols, std::vector<size_t>& rows);
     bool Block4(std::vector<size_t>& cols, std::vector<size_t>& rows);
+    bool Block5(std::vector<size_t>& cols, std::vector<size_t>& rows);
     bool TrySetQueen(size_t col, size_t row);
     void SetInputCopy();
-    void SetInputData();
     void SetBlock1Copy();
+    void SetBlock3Copy();
+    void SetInputData();
     void SetBlock1Data();
+    void SetBlock3Data();
     std::vector<size_t> GetFreeColsInRow(size_t row, std::vector<size_t>& cols);
     void SetFreeRowsCols(std::vector<size_t>& cols, std::vector<size_t>& rows);
     bool FreeHasDecision(std::vector<size_t>& cols, std::vector<size_t>& rows);
