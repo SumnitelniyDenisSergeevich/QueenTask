@@ -1,13 +1,12 @@
 #pragma once
 #include <vector>
-#include <optional>
-#include <set>
 #include <string>
 
 class Chessboard {
 public:
     Chessboard(size_t chessboard_size);
     std::string Decision(std::pair<int, int> mandatoryQueenCoordinates);
+    std::string Block5Decision(std::pair<int, int> mandatoryQueenCoordinates);
 private:
     std::vector<int> map_;
     bool has_decision_ = false;
@@ -41,6 +40,7 @@ private:
     bool Block3(std::vector<size_t>& cols, std::vector<size_t>& rows);
     bool Block4(std::vector<size_t>& cols, std::vector<size_t>& rows);
     bool Block5(std::vector<size_t>& cols, std::vector<size_t>& rows);
+    void Block5Only();
     bool TrySetQueen(size_t col, size_t row);
     void EraseQueen(size_t col, size_t row);
     size_t GetFreePos(std::vector<size_t>& cols, std::vector<size_t>& rows);

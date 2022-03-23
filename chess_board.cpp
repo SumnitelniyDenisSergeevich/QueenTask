@@ -81,6 +81,16 @@ string Chessboard::Decision(std::pair<int, int> queen_coord) {
     return PrintMap();
 }
 
+std::string Chessboard::Block5Decision(std::pair<int, int> queen_coord) {
+    map_[queen_coord.first] = queen_coord.second;
+    right_diagonal_[queen_coord.first + queen_coord.second] = true;
+    left_diagonal_[size_ + queen_coord.first - queen_coord.second - 1] = true;
+    ++queen_count_;
+    SetInputCopy();
+    Block5Only();
+    return PrintMap();
+}
+
 void Chessboard::SetFreeRowsCols(std::vector<size_t>& cols, std::vector<size_t>& rows) {
     cols.clear();
     rows.clear();
@@ -155,7 +165,7 @@ void Chessboard::Block1() {
             ShuffleVector(free_cols);
             size_t while_count = 0;
             while (queen_count_ < base_level2_) {
-                if (while_count > 1000) {
+                if (while_count > 100) {
                     has_decision = false;
                     break;
                 }
@@ -171,6 +181,9 @@ void Chessboard::Block1() {
             }
         } while (!has_decision); // пока не будет решения, отсюда не выйдем, может получиться бесконечный цикл?
     } while (!Block2(free_cols, free_rows));
+    if (queen_count_ == size_) {
+        has_decision_ = true;
+    }
 }
 
 bool Chessboard::Block2(std::vector<size_t>& cols, std::vector<size_t>& rows) {
@@ -184,7 +197,7 @@ bool Chessboard::Block3(std::vector<size_t>& cols, std::vector<size_t>& rows) {
     size_t beak_treak_count = 0;
     do {
         ++beak_treak_count;
-        if (beak_treak_count > 50) {
+        if (beak_treak_count > 100) {
             return false;
         }
         SetBlock1Data();
@@ -194,7 +207,7 @@ bool Chessboard::Block3(std::vector<size_t>& cols, std::vector<size_t>& rows) {
         ShuffleVector(cols);
         size_t while_count = 0;
         while (queen_count_ < base_level3_) {
-            if (while_count > 50) {
+            if (while_count > 100) {
                 return false;
             }
             ++while_count;
@@ -223,7 +236,7 @@ bool Chessboard::Block5(std::vector<size_t>& cols, std::vector<size_t>& rows) {
     bool has_decision;
     size_t beak_treak_count = 0;
     do {
-        if (beak_treak_count > 10) {
+        if (beak_treak_count > 100) {
             return false;
         }
         has_decision = true;
@@ -249,6 +262,48 @@ bool Chessboard::Block5(std::vector<size_t>& cols, std::vector<size_t>& rows) {
     } while (!has_decision);
     return true;
 }
+
+void Chessboard::Block5Only() {
+    vector<size_t> rows;
+    vector<size_t> cols;
+    SetFreeRowsCols(cols, rows);
+    vector<size_t> free_rows_copy = rows;
+    vector<size_t> free_cols_copy = cols;
+    //---------------------------------------------------------------------------------
+    bool has_decision;
+    size_t beak_treak_count = 0;
+    do {
+        if (beak_treak_count > 25) {
+            has_decision_ = false;
+            break;
+        }
+        has_decision = true;
+        ++beak_treak_count;
+        rows = free_rows_copy;
+        cols = free_cols_copy;
+        SetInputData();
+        while (queen_count_ < size_) {
+            vector<pair<size_t, size_t>> free_cols_row_id = GetFreeColsCountInRow(cols, rows);
+            if (!free_cols_row_id.begin()->first) {
+                has_decision = false;
+                break;
+            }
+            size_t random_row_with_smallest_free_cols = GetRowsWithSmallestFreeCols(free_cols_row_id);; // тут я получил строку, теперь надо получить col с наименьшими потерями
+
+            vector<size_t> free_cols_in_free_row = GetFreeColsInRow(random_row_with_smallest_free_cols, cols);
+
+            size_t random_col_with_smallest_damage = GetRandomColWithSmallestDamage(random_row_with_smallest_free_cols, free_cols_in_free_row, cols, rows);
+            TrySetQueen(random_col_with_smallest_damage, random_row_with_smallest_free_cols);
+            rows.erase(find(rows.begin(), rows.end(), random_row_with_smallest_free_cols));
+            cols.erase(find(cols.begin(), cols.end(), random_col_with_smallest_damage));
+        }
+    } while (!has_decision);
+    if (queen_count_ == size_) {
+        has_decision_ = true;
+    }
+    //---------------------------------------------------------------------------------
+}
+
 
 size_t Chessboard::GetFreePos(std::vector<size_t>& cols, std::vector<size_t>& rows) {
     size_t count = 0;
@@ -325,20 +380,25 @@ std::vector<size_t> Chessboard::GetFreeColsInRow(size_t row, vector<size_t>& col
 
 std::string Chessboard::PrintMap() {
     string result = "";
-    has_decision_ = true;
     bool b = false;
     if (has_decision_) {
-        for (const int ferz : map_) {
+        /*for (const int ferz : map_) {
             if (b) {
                 result += '\n';
             }
             b = true;
-            if (ferz == -1) {
-                result += std::string(size_, '!');
-                continue;
+            result += std::string(ferz, '.') + "Q"s + std::string(size_ - ferz - 1, '.');
+        }*/
+
+        for (size_t i = 0; i < size_; ++i) {
+            if (b) {
+                result += '\n';
             }
-            result += std::string(ferz, ',') + "Q"s + std::string(size_ - ferz - 1, ',');
+            b = true;
+            size_t col_index = std::find(map_.begin(), map_.end(), i) - map_.begin();
+            result += std::string(col_index, '.') + "Q"s + std::string(size_ - col_index - 1, '.');
         }
+        result += '\n';
     }
     return result;
 }
