@@ -42,6 +42,8 @@ private:
     bool Block4(std::vector<size_t>& cols, std::vector<size_t>& rows);
     bool Block5(std::vector<size_t>& cols, std::vector<size_t>& rows);
     bool TrySetQueen(size_t col, size_t row);
+    void EraseQueen(size_t col, size_t row);
+    size_t GetFreePos(std::vector<size_t>& cols, std::vector<size_t>& rows);
     void SetInputCopy();
     void SetBlock1Copy();
     void SetBlock3Copy();
@@ -51,4 +53,7 @@ private:
     std::vector<size_t> GetFreeColsInRow(size_t row, std::vector<size_t>& cols);
     void SetFreeRowsCols(std::vector<size_t>& cols, std::vector<size_t>& rows);
     bool FreeHasDecision(std::vector<size_t>& cols, std::vector<size_t>& rows);
+    std::vector<std::pair<size_t, size_t>> GetFreeColsCountInRow(std::vector<size_t>& cols, std::vector<size_t>& rows);
+    size_t GetRowsWithSmallestFreeCols(std::vector<std::pair<size_t, size_t>> free_cols_row_id);
+    size_t GetRandomColWithSmallestDamage(size_t random_row_with_smallest_free_cols, std::vector<size_t> free_cols_in_free_row, std::vector<size_t>& cols, std::vector<size_t>& rows);
 };
