@@ -12,6 +12,6 @@ std::string solveNQueens(int n, std::pair<int, int> mandatoryQueenCoordinates)
 
 int main()
 {
-    cout << solveNQueens(30, { 3,3 }) << endl;
+    cout << solveNQueens(70, { 0,0 }) << endl;
     system("pause");
 }

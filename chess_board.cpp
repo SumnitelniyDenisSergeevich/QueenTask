@@ -194,7 +194,7 @@ bool Chessboard::Block3(std::vector<size_t>& cols, std::vector<size_t>& rows) {
         ShuffleVector(cols);
         size_t while_count = 0;
         while (queen_count_ < base_level3_) {
-            if (while_count > 1000) {
+            if (while_count > 50) {
                 return false;
             }
             ++while_count;
@@ -220,14 +220,14 @@ bool Chessboard::Block4(std::vector<size_t>& cols, std::vector<size_t>& rows) {
 bool Chessboard::Block5(std::vector<size_t>& cols, std::vector<size_t>& rows) {
     vector<size_t> free_rows_copy = rows;
     vector<size_t> free_cols_copy = cols;
-    bool has_decision = true;
-    size_t while_count = 0;
+    bool has_decision;
+    size_t beak_treak_count = 0;
     do {
-        if (while_count > 25) {
+        if (beak_treak_count > 10) {
             return false;
         }
         has_decision = true;
-        ++while_count;
+        ++beak_treak_count;
         rows = free_rows_copy;
         cols = free_cols_copy;
         SetBlock3Data();
